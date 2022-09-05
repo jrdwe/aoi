@@ -19,25 +19,38 @@ builtin_count(void)
 }
 
 void 
+builtin_welcome(void)
+{
+	printf(" _       __       __                                   __              ___           _\n");
+  printf("| |     / /___   / /_____ ____   ____ ___   ___       / /_ ____       /   |  ____   (_)\n");
+  printf("| | /| / // _ \\ / // ___// __ \\ / __ `__ \\ / _ \\     / __// __ \\     / /| | / __ \\ / /\n");
+  printf("| |/ |/ //  __// // /__ / /_/ // / / / / //  __/    / /_ / /_/ /    / ___ |/ /_/ // /\n");
+  printf("|_______ ____//_/ \\___/ \\____/__/ /_/ /_/ \\___/    ____/ \\____/    /__  |_|\\____/__/__\n");
+  printf(" /_  __// /_   ___     _____ (_)____ ___   ____   / /___     _____ / /_   ___   / // /\n");
+  printf("  / /  / __ \\ / _ \\   / ___// // __ `__ \\ / __ \\ / // _ \\   / ___// __ \\ / _ \\ / // /\n");
+  printf(" / /  / / / //  __/  (__  )/ // / / / / // /_/ // //  __/  (__  )/ / / //  __// // /\n");
+  printf("/_/  /_/ /_/ \\___/  /____//_//_/ /_/ /_// .___//_/ \\___/  /____//_/ /_/ \\___//_//_/\n");
+  printf("                                       /_/                                            \n\n");
+	printf("Type any command to get started or 'help' to find out more\n\n");
+}
+
+void 
 builtin_help(char** argument)
 {
-	printf("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
-	printf("Welcome! You've called the 'help' command.\n");
+	printf("\nWelcome! You've called the 'help' command.\n");
 	printf("This program is a simple shell with a few builtin commands\n\n");
 	printf("These commands are listed below: \n");
 
 	for (int i = 0; i < builtin_count(); i++)
-		printf("++ %s\n", builtin_commands[i]);
+		printf("-> %s\n", builtin_commands[i]);
 
-	printf("\nAll other valid system commands and arguments can be used as well.\n");
-	printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n");
+	printf("\nAll other valid system commands and arguments can be used as well.\n\n");
 }
 
 void 
 builtin_exit(char** argument)
 {
-	printf("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
-	printf("See you soon! Exiting now..\n");
+	printf("\nSee you soon! Exiting now..\n");
 
 	exit(EXIT_SUCCESS);
 }
@@ -45,9 +58,9 @@ builtin_exit(char** argument)
 char** 
 parse_input(char* line)
 {
-	int ctr = 0;
+	int ctr = 0, bufferlen = AOI_ARGS_BUFSIZE;
 	char *arg;
-	char **args = malloc(sizeof(*args) * AOI_ARGS_BUFSIZE);
+	char **args = malloc(sizeof(*args) * bufferlen);
 
 	// check malloc has successfully allocated memory space
 	if (!args)
@@ -56,8 +69,23 @@ parse_input(char* line)
 		exit(EXIT_FAILURE);	
 	}
 
-	while ((arg = strsep(&line, " ")) != NULL)
+	while ((arg = strsep(&line, " \n")) != NULL)
+	{
 		args[ctr++] = arg;
+
+		if (ctr > bufferlen)
+		{
+			printf("ALLOC!\n");
+			bufferlen *= 2;
+			args = realloc(args, sizeof(*args) * (bufferlen));
+
+			if (!args) 
+			{
+				fprintf(stderr, "Unable to allocate required memory for arguments\n");
+				exit(EXIT_FAILURE);	
+			}
+		}
+	}
 
 	return args;
 }
@@ -75,13 +103,23 @@ read_input(void)
 	exit(EXIT_FAILURE);
 }
 
+int 
+execute_command(char **args)
+{
+	
+}
+
 void
 userloop(void)
 {
+	char* user_input;
+	char** parsed_input;
+
 	for(;;)
 	{
-		printf("--> ");
-		char* user_input = read_input();
+		printf("-> ");
+		user_input = read_input();
+		parsed_input = parse_input(user_input);
 
 		for (int i = 0; i < builtin_count(); i++)
 		{
@@ -96,9 +134,9 @@ main(void)
 {
 	// Todo
 	// Exec command with the provided arguments
-	// Welcome art! 
-	// Trim function to remove whitespace
-
+	// seperate out the execute and cnntrol flow
+	
+	builtin_welcome();
 	userloop();	
 
 	exit(EXIT_SUCCESS);
