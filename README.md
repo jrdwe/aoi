@@ -1,6 +1,9 @@
+
 @author Jarryd W (jrdwe)
 
-A simple hobbyist shell built as a small project. 
+A tiny hobbyist shell built as a small educational project. 
+
+![Shell Demo](/assets/demo.png)
 
 To run the shell: `gcc src/aoi.c -o aoi && ./aoi`
 
