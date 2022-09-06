@@ -6,17 +6,19 @@ const char *builtin_commands[] =
 	"exit"
 };
 
-void (*builtin_functions[]) (char **) =
+void (*builtin_functions[]) (void) =
 {
 	&builtin_help,
 	&builtin_exit
 };
+
 
 int 
 builtin_count(void)
 {
 	return sizeof(builtin_commands) / sizeof(char *);
 }
+
 
 void 
 builtin_welcome(void)
@@ -34,26 +36,31 @@ builtin_welcome(void)
 	printf("Type any command to get started or 'help' to find out more\n\n");
 }
 
+
 void 
-builtin_help(char** argument)
+builtin_help(void)
 {
+	int i;
+
 	printf("\nWelcome! You've called the 'help' command.\n");
 	printf("This program is a simple shell with a few builtin commands\n\n");
 	printf("These commands are listed below: \n");
 
-	for (int i = 0; i < builtin_count(); i++)
-		printf("-> %s\n", builtin_commands[i]);
+	for (i = 0; i < builtin_count(); i++)
+		printf("> %s\n", builtin_commands[i]);
 
 	printf("\nAll other valid system commands and arguments can be used as well.\n\n");
 }
 
+
 void 
-builtin_exit(char** argument)
+builtin_exit(void)
 {
 	printf("\nSee you soon! Exiting now..\n");
 
 	exit(EXIT_SUCCESS);
 }
+
 
 char** 
 parse_input(char* line)
@@ -69,13 +76,14 @@ parse_input(char* line)
 		exit(EXIT_FAILURE);	
 	}
 
-	while ((arg = strsep(&line, " \n")) != NULL)
+	while ((arg = strsep(&line, " \n\t")) != NULL)
 	{
+		if (*arg == '\0') continue;
+
 		args[ctr++] = arg;
 
 		if (ctr > bufferlen)
 		{
-			printf("ALLOC!\n");
 			bufferlen *= 2;
 			args = realloc(args, sizeof(*args) * (bufferlen));
 
@@ -87,8 +95,10 @@ parse_input(char* line)
 		}
 	}
 
+	args[ctr] = NULL;
 	return args;
 }
+
 
 char*
 read_input(void)
@@ -103,41 +113,76 @@ read_input(void)
 	exit(EXIT_FAILURE);
 }
 
+
 int 
 execute_command(char **args)
 {
-	
+	int i;
+
+	// Empty command check
+	if (args[0] == NULL)
+		return 1;
+
+	// Builtin command check
+	for (i = 0; i < builtin_count(); i++)
+	{
+		if (strcmp(args[0], builtin_commands[i]) == 0)
+		{
+			builtin_functions[i]();
+			return 1;
+		}
+	}
+
+	// System command call
+	return enact_syscall(args);
 }
+
+
+int 
+enact_syscall(char **args)
+{
+	int state;
+	pid_t pid;
+
+	if ((pid = fork()) == -1)
+	{
+		fprintf(stderr, "Fork failed - couldn't execute command!\n");
+	} else if (pid == 0) {
+		if (execvp(args[0], args) == -1)
+			fprintf(stderr, "Failed to execute command! Please check your spelling. \n");
+
+		exit(EXIT_FAILURE);
+	}
+
+	waitpid(pid, &state, WUNTRACED);
+
+	return 1;
+}
+
 
 void
 userloop(void)
 {
+	int state = 1;
 	char* user_input;
 	char** parsed_input;
 
-	for(;;)
+	while (state)	
 	{
 		printf("-> ");
 		user_input = read_input();
 		parsed_input = parse_input(user_input);
-
-		for (int i = 0; i < builtin_count(); i++)
-		{
-			if (strcmp(parse_input(user_input)[0], builtin_commands[i]) == 0)
-				builtin_functions[i](parse_input(user_input));
-		}
+		state = execute_command(parsed_input);
 	}
 }
+
 
 int
 main(void)
 {
-	// Todo
-	// Exec command with the provided arguments
-	// seperate out the execute and cnntrol flow
-	
 	builtin_welcome();
 	userloop();	
 
 	exit(EXIT_SUCCESS);
 }
+
