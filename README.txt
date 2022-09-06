@@ -4,4 +4,4 @@
 
 A simple hobbyist shell built as a small project. 
 
-Future improvements can involve..
+Future improvements will include expanding the project to support piping & redirection.

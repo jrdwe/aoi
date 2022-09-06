@@ -16,12 +16,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
-#define AOI_ARGS_BUFSIZE 32
+#define ARGS_BUFSIZE 32
 
 // Variables for the built-in shell commands 
 extern const char *builtin_commands[];
-extern void (*builtin_functions[]) (void);
+extern int (*builtin_functions[]) (void);
 
 /* @brief Returns the number of builtin commands 
  * 
@@ -31,15 +33,15 @@ int builtin_count(void);
 
 /* @brief Displays help and advice to the programs user
  * 
- * @return void
+ * @return Returns 1 for program to continue 
  */
-void builtin_help(void); 
+int builtin_help(void); 
 
 /* @brief Exits the program gracefully at the users request
  * 
- * @return void
+ * @return Returns 0 for program to exit
  */
-void builtin_exit(void); 
+int builtin_exit(void); 
 
 /* @brief Displays welcome message when terminal is loaded
  * 

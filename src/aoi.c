@@ -6,7 +6,7 @@ const char *builtin_commands[] =
 	"exit"
 };
 
-void (*builtin_functions[]) (void) =
+int (*builtin_functions[]) (void) =
 {
 	&builtin_help,
 	&builtin_exit
@@ -37,7 +37,7 @@ builtin_welcome(void)
 }
 
 
-void 
+int 
 builtin_help(void)
 {
 	int i;
@@ -50,22 +50,25 @@ builtin_help(void)
 		printf("> %s\n", builtin_commands[i]);
 
 	printf("\nAll other valid system commands and arguments can be used as well.\n\n");
+
+	return 1;
 }
 
 
-void 
+int
 builtin_exit(void)
 {
 	printf("\nSee you soon! Exiting now..\n");
 
-	exit(EXIT_SUCCESS);
+	return 0;
 }
 
 
 char** 
 parse_input(char* line)
 {
-	int ctr = 0, bufferlen = AOI_ARGS_BUFSIZE;
+	int ctr = 0, bufferlen = ARGS_BUFSIZE;					
+	void *ptr;																					
 	char *arg;
 	char **args = malloc(sizeof(*args) * bufferlen);
 
@@ -78,24 +81,31 @@ parse_input(char* line)
 
 	while ((arg = strsep(&line, " \n\t")) != NULL)
 	{
+		// if NULL then pass to next token
 		if (*arg == '\0') continue;
 
-		args[ctr++] = arg;
-
-		if (ctr > bufferlen)
+		if (ctr == bufferlen)
 		{
+			// double buffer size and allocate more memory 
 			bufferlen *= 2;
-			args = realloc(args, sizeof(*args) * (bufferlen));
+			ptr = realloc(args, sizeof(*args) * bufferlen);
 
-			if (!args) 
+			// check realloc has successfully allocated memory space
+			if (!ptr) 
 			{
 				fprintf(stderr, "Unable to allocate required memory for arguments\n");
 				exit(EXIT_FAILURE);	
 			}
+
+			args = ptr;
 		}
+
+		// save current token into array
+		args[ctr++] = arg;
 	}
 
 	args[ctr] = NULL;
+
 	return args;
 }
 
@@ -119,21 +129,18 @@ execute_command(char **args)
 {
 	int i;
 
-	// Empty command check
+	// empty command check
 	if (args[0] == NULL)
 		return 1;
 
-	// Builtin command check
+	// builtin command check
 	for (i = 0; i < builtin_count(); i++)
 	{
 		if (strcmp(args[0], builtin_commands[i]) == 0)
-		{
-			builtin_functions[i]();
-			return 1;
-		}
+			return builtin_functions[i]();
 	}
 
-	// System command call
+	// system command call
 	return enact_syscall(args);
 }
 
@@ -146,8 +153,11 @@ enact_syscall(char **args)
 
 	if ((pid = fork()) == -1)
 	{
+
 		fprintf(stderr, "Fork failed - couldn't execute command!\n");
+
 	} else if (pid == 0) {
+
 		if (execvp(args[0], args) == -1)
 			fprintf(stderr, "Failed to execute command! Please check your spelling. \n");
 
@@ -173,6 +183,12 @@ userloop(void)
 		user_input = read_input();
 		parsed_input = parse_input(user_input);
 		state = execute_command(parsed_input);
+
+		free(user_input);
+		user_input = NULL;
+
+		free(parsed_input);
+		parsed_input = NULL;
 	}
 }
 
