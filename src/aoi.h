@@ -68,16 +68,16 @@ int enact_syscall(char **args);
 char *read_input(void);
 
 /* @brief Seperates the user's input by whitespace 
- *				to acquire the desired commmand and any 
- *				arguments
+ *        to acquire the desired commmand and any 
+ *        arguments
  *
- * @param	line The user's input
+ * @param line The user's input
  * @return An array of strings taken from line
  */
 char **parse_input(char *line);
 
 /* @brief The core program loop of the shell
- *				which runs until the user exits
+ *        which runs until the user exits
  *
  * @return void
  */ 
