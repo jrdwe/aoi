@@ -1,6 +1,6 @@
 A tiny hobbyist shell built as a small educational project. 
 
-![Shell Demo](/assets/demo.png)
+<img src="/assets/demo.png" alt="Shell Demo" width="650"/>
 
 To run the shell: `gcc src/aoi.c -o aoi && ./aoi`
 
